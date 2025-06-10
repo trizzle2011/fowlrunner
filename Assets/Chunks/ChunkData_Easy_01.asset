@@ -15,6 +15,6 @@ MonoBehaviour:
   prefab: {fileID: 6854345420925121602, guid: f4e8dda95a65ef842a9210897cdc675e, type: 3}
   difficulty: 0
   weight: 5
-  leftObstacle: {fileID: 0}
-  centerObstacle: {fileID: 0}
-  rightObstacle: {fileID: 0}
+  leftObstacle: {fileID: 5222080706443180929, guid: 53bc1388c85ea0e4aa05c215d6efe459, type: 3}
+  centerObstacle: {fileID: 5222080706443180929, guid: 53bc1388c85ea0e4aa05c215d6efe459, type: 3}
+  rightObstacle: {fileID: 5222080706443180929, guid: 53bc1388c85ea0e4aa05c215d6efe459, type: 3}
