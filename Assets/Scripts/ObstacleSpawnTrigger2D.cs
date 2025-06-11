@@ -27,7 +27,7 @@ public class ObstacleSpawnTrigger2D : MonoBehaviour
     private void Awake()
     {
         if (poolManager == null)
-            poolManager = PoolManager.Instance;
+            poolManager = UnityEngine.Object.FindAnyObjectByType<PoolManager>();
         if (poolManager == null)
             Debug.LogError("ObstacleSpawnTrigger2D: poolManager not assigned", this);
 
@@ -37,21 +37,14 @@ public class ObstacleSpawnTrigger2D : MonoBehaviour
             Debug.LogError("ObstacleSpawnTrigger2D: spawnParent not assigned", this);
 
         if (obstaclePrefab == null)
-        {
-            var inst = GetComponentInParent<ChunkInstance>();
-            if (inst != null && inst.Data != null)
-            {
-                obstaclePrefab = side switch
-                {
-                    SpawnSide.Left => inst.Data.leftObstacle,
-                    SpawnSide.Center => inst.Data.centerObstacle,
-                    SpawnSide.Right => inst.Data.rightObstacle,
-                    _ => null
-                };
-            }
-        }
+            obstaclePrefab = Resources.Load<GameObject>("ObstaclePrefab");
+
         if (obstaclePrefab == null)
+        {
             Debug.LogError($"ObstacleSpawnTrigger2D: obstaclePrefab not assigned for side {side}", this);
+            enabled = false;
+            return;
+        }
     }
 
     private void Reset()
@@ -62,18 +55,22 @@ public class ObstacleSpawnTrigger2D : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (!other.CompareTag("PlayerDuck"))
+        if (!enabled || !other.CompareTag("PlayerDuck"))
             return;
 
         if (poolManager == null || obstaclePrefab == null || spawnParent == null)
             return;
 
         var go = poolManager.GetPooledObject(obstaclePrefab);
+        if (go == null)
+            return;
+
         go.transform.SetParent(spawnParent, false);
         go.transform.position = transform.position;
         go.SetActive(true);
 
-        StartCoroutine(FadeInCoroutine(go.GetComponent<SpriteRenderer>(), 0.3f));
+        if (go.TryGetComponent<SpriteRenderer>(out var sr))
+            StartCoroutine(FadeInCoroutine(sr, 0.3f));
     }
 
     private IEnumerator FadeInCoroutine(SpriteRenderer sr, float duration)
