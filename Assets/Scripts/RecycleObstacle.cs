@@ -8,8 +8,8 @@ public class RecycleObstacle : MonoBehaviour
     public float diveSpeed = 5f;
 
     [Header("Spawn Settings")]
-    [Tooltip("Exact name of the RiverTile GameObject to spawn from")]
-    public string spawnTileName = "RiverTile 1-4";
+    [Tooltip("Reference to the top RiverTile used to determine spawn height")]
+    public Transform spawnTile;
     [Tooltip("How long it takes to fade in on respawn")]
     public float fadeDuration = 0.5f;
 
@@ -34,17 +34,16 @@ public class RecycleObstacle : MonoBehaviour
         var bl = cam.ViewportToWorldPoint(Vector3.zero);
         bottomY = bl.y - 1f;
 
-        // calculate top spawn Y from your river‐tile
-        var topTile = GameObject.Find(spawnTileName);
-        if (topTile != null)
+        // calculate top spawn Y from your river tile
+        if (spawnTile != null)
         {
-            var tileSR = topTile.GetComponent<SpriteRenderer>();
+            var tileSR = spawnTile.GetComponent<SpriteRenderer>();
             float halfH = tileSR != null ? tileSR.bounds.extents.y : 0f;
-            spawnY = topTile.transform.position.y + halfH;
+            spawnY = spawnTile.position.y + halfH;
         }
         else
         {
-            Debug.LogWarning($"RecycleObstacle: “{spawnTileName}” not found—using current Y");
+            Debug.LogWarning("RecycleObstacle: spawnTile not assigned—using current Y");
             spawnY = transform.position.y;
         }
 
