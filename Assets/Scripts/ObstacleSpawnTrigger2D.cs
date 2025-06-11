@@ -69,9 +69,9 @@ public class ObstacleSpawnTrigger2D : MonoBehaviour
             return;
 
         var go = poolManager.GetPooledObject(obstaclePrefab);
-        go.SetActive(true);
         go.transform.SetParent(spawnParent, false);
         go.transform.position = transform.position;
+        go.SetActive(true);
 
         StartCoroutine(FadeInCoroutine(go.GetComponent<SpriteRenderer>(), 0.3f));
     }
