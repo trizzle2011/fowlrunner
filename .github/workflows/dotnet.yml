@@ -14,7 +14,13 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
 
-    # Remove the invalid setup-dotnet step
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: 9.0.x
+
+    - name: Install Unity Editor
+      run: choco install unity --version=2022.3.0f1
 
     - name: Restore dependencies
       run: dotnet restore fowlrunner.sln
