@@ -1,4 +1,5 @@
 // ObstacleSpawnTrigger2D.cs
+using System.Collections;
 using UnityEngine;
 
 public enum SpawnSide
@@ -14,74 +15,86 @@ public class ObstacleSpawnTrigger2D : MonoBehaviour
     [Tooltip("Which side this trigger represents")]
     public SpawnSide side;
 
+    [Tooltip("Manager used for pooled obstacle instances")]
+    public PoolManager poolManager;
+
+    [Tooltip("Prefab to spawn when triggered")]
+    public GameObject obstaclePrefab;
+
+    [Tooltip("Parent transform for spawned obstacles")]
+    public Transform spawnParent;
+
+    private void Awake()
+    {
+        if (poolManager == null)
+            poolManager = PoolManager.Instance;
+        if (poolManager == null)
+            Debug.LogError("ObstacleSpawnTrigger2D: poolManager not assigned", this);
+
+        if (spawnParent == null)
+            spawnParent = transform.parent;
+        if (spawnParent == null)
+            Debug.LogError("ObstacleSpawnTrigger2D: spawnParent not assigned", this);
+
+        if (obstaclePrefab == null)
+        {
+            var inst = GetComponentInParent<ChunkInstance>();
+            if (inst != null && inst.Data != null)
+            {
+                obstaclePrefab = side switch
+                {
+                    SpawnSide.Left => inst.Data.leftObstacle,
+                    SpawnSide.Center => inst.Data.centerObstacle,
+                    SpawnSide.Right => inst.Data.rightObstacle,
+                    _ => null
+                };
+            }
+        }
+        if (obstaclePrefab == null)
+            Debug.LogError($"ObstacleSpawnTrigger2D: obstaclePrefab not assigned for side {side}", this);
+    }
+
     private void Reset()
     {
-        // Auto-set a 2D trigger collider
         var col = GetComponent<Collider2D>();
         col.isTrigger = true;
     }
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        Debug.Log($"[Spawn_{side}] OnTriggerEnter2D with {other.name} (tag={other.tag}) at {transform.position}");
-
-        // 1) Only care about the player
         if (!other.CompareTag("PlayerDuck"))
-        {
-            Debug.Log($"[Spawn_{side}] Ignoring—tag is not PlayerDuck");
             return;
-        }
 
-        // 2) Find the ChunkInstance to know what to spawn
-        var inst = GetComponentInParent<ChunkInstance>();
-        if (inst == null)
-        {
-            Debug.LogError($"[Spawn_{side}] No ChunkInstance found on parent!");
+        if (poolManager == null || obstaclePrefab == null || spawnParent == null)
             return;
-        }
 
-        // 3) Pick the right prefab from the ChunkData
-        GameObject prefabToSpawn = side switch
-        {
-            SpawnSide.Left => inst.Data.leftObstacle,
-            SpawnSide.Center => inst.Data.centerObstacle,
-            SpawnSide.Right => inst.Data.rightObstacle,
-            _ => null
-        };
+        var go = poolManager.GetPooledObject(obstaclePrefab);
+        go.SetActive(true);
+        go.transform.SetParent(spawnParent, false);
+        go.transform.position = transform.position;
 
-        if (prefabToSpawn == null)
-        {
-            Debug.LogError($"[Spawn_{side}] No obstacle prefab assigned for side {side} on chunk {inst.Data.name}");
-            return;
-        }
+        StartCoroutine(FadeInCoroutine(go.GetComponent<SpriteRenderer>(), 0.3f));
+    }
 
-        // 4) Spawn via PoolManager
-        var instance = PoolManager.Instance.Spawn(
-            prefabToSpawn,
-            transform.position,
-            Quaternion.identity
-        );
-        Debug.Log($"[Spawn_{side}] Spawned instance '{instance.name}' from prefab '{prefabToSpawn.name}'");
-
-        // 5) Sanity-check the spawned object's renderer
-        var sr = instance.GetComponent<SpriteRenderer>();
+    private IEnumerator FadeInCoroutine(SpriteRenderer sr, float duration)
+    {
         if (sr == null)
+            yield break;
+
+        var c = sr.color;
+        c.a = 0f;
+        sr.color = c;
+
+        float t = 0f;
+        while (t < duration)
         {
-            Debug.LogWarning($"[Spawn_{side}] Spawned object has no SpriteRenderer!");
-        }
-        else
-        {
-            // avoid null-propagation on UnityEngine.Object
-            string spriteName = sr.sprite != null ? sr.sprite.name : "null";
-            Debug.Log($"[Spawn_{side}] SpriteRenderer.sprite={spriteName}, layer={sr.sortingLayerName}, order={sr.sortingOrder}");
+            t += Time.deltaTime;
+            c.a = Mathf.Clamp01(t / duration);
+            sr.color = c;
+            yield return null;
         }
 
-        // 6) Ensure it gets reclaimed by the pool
-        if (!instance.TryGetComponent<PooledObject>(out var po))
-            po = instance.AddComponent<PooledObject>();
-        po.OriginalPrefab = prefabToSpawn;
-
-        // 7) Only fire this trigger once
-        enabled = false;
+        c.a = 1f;
+        sr.color = c;
     }
 }

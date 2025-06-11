@@ -36,6 +36,29 @@ public class PoolManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Return an inactive instance for the given prefab, creating one if needed.
+    /// </summary>
+    public GameObject GetPooledObject(GameObject prefab)
+    {
+        if (!pools.ContainsKey(prefab))
+            pools[prefab] = new Queue<GameObject>();
+
+        GameObject instance;
+        if (pools[prefab].Count > 0)
+        {
+            instance = pools[prefab].Dequeue();
+        }
+        else
+        {
+            instance = Instantiate(prefab);
+            instance.SetActive(false);
+            var po = instance.AddComponent<PooledObject>();
+            po.OriginalPrefab = prefab;
+        }
+        return instance;
+    }
+
     /// <summary>Get an instance (reuse or new) at pos/rot.</summary>
     public GameObject Spawn(GameObject prefab, Vector3 pos, Quaternion rot)
     {
