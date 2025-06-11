@@ -14,12 +14,8 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v3
-      with:
-        dotnet-version: '4.7.1'
+    # Remove the invalid setup-dotnet step
 
-   
     - name: Restore dependencies
       run: dotnet restore fowlrunner.sln
 
