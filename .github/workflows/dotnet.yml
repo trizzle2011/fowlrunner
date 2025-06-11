@@ -17,7 +17,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: '8.x' # or your project's preferred version
+        dotnet-version: '9.x' # or your project's preferred version
 
     - name: Restore dependencies
       run: dotnet restore fowlrunner.sln
