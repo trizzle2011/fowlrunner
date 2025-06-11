@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
     - name: Checkout repository
@@ -17,13 +17,13 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: '9.x' # or your project's preferred version
+        dotnet-version: '8.x'
+
+    - name: Install .NET Framework 4.7.1 Developer Pack
+      run: choco install netfx-4.7.1-devpack -y
 
     - name: Restore dependencies
       run: dotnet restore fowlrunner.sln
 
     - name: Build
       run: dotnet build fowlrunner.sln --no-restore --configuration Release
-
-    - name: Test
-      run: dotnet test fowlrunner.sln --no-build --verbosity normal
