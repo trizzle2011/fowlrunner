@@ -5,6 +5,7 @@ using UnityEngine.InputSystem;
 public class DuckController : MonoBehaviour
 {
     [Header("Lane Transforms (0 = Left, 1 = Center, 2 = Right)")]
+    [Tooltip("Assign Lane_Left, Lane_Center and Lane_Right from the scene root")]
     public Transform[] lanes;
 
     [Header("Movement Settings")]
@@ -18,27 +19,16 @@ public class DuckController : MonoBehaviour
 
     void Awake()
     {
-        // If the array isn't filled out in the Inspector, grab them by name:
+        // Ensure lane array always has 3 entries
         if (lanes == null || lanes.Length != 3)
             lanes = new Transform[3];
 
-        if (lanes[0] == null)
+        // Warn if any lanes are missing. Assign them via the Inspector or a
+        // setup script instead of relying on GameObject.Find.
+        for (int i = 0; i < lanes.Length; i++)
         {
-            var go = GameObject.Find("Lane_Left");
-            if (go != null) lanes[0] = go.transform;
-            else Debug.LogError("DuckController: can't find 'Lane_Left'");
-        }
-        if (lanes[1] == null)
-        {
-            var go = GameObject.Find("Lane_Center");
-            if (go != null) lanes[1] = go.transform;
-            else Debug.LogError("DuckController: can't find 'Lane_Center'");
-        }
-        if (lanes[2] == null)
-        {
-            var go = GameObject.Find("Lane_Right");
-            if (go != null) lanes[2] = go.transform;
-            else Debug.LogError("DuckController: can't find 'Lane_Right'");
+            if (lanes[i] == null)
+                Debug.LogWarning($"DuckController: lane index {i} is not assigned.");
         }
     }
 
