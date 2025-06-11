@@ -19,16 +19,21 @@ public class DuckController : MonoBehaviour
 
     void Awake()
     {
-        // Ensure lane array always has 3 entries
+        // Ensure lane array always has exactly 3 entries
         if (lanes == null || lanes.Length != 3)
             lanes = new Transform[3];
 
-        // Warn if any lanes are missing. Assign them via the Inspector or a
-        // setup script instead of relying on GameObject.Find.
-        for (int i = 0; i < lanes.Length; i++)
+        string[] laneNames = { "Lane_Left", "Lane_Center", "Lane_Right" };
+        for (int i = 0; i < lanes.Length && i < laneNames.Length; i++)
         {
             if (lanes[i] == null)
-                Debug.LogWarning($"DuckController: lane index {i} is not assigned.");
+            {
+                var found = GameObject.Find(laneNames[i]);
+                if (found != null)
+                    lanes[i] = found.transform;
+                if (lanes[i] == null)
+                    Debug.LogWarning($"DuckController: lane index {i} is not assigned.");
+            }
         }
     }
 
@@ -52,14 +57,14 @@ public class DuckController : MonoBehaviour
     void OnMoveLeft(InputValue value)
     {
         if (!value.isPressed || isDiving) return;
-        if (currentLane > 0) currentLane--;
+        currentLane = Mathf.Clamp(currentLane - 1, 0, 2);
         UpdateTarget();
     }
 
     void OnMoveRight(InputValue value)
     {
         if (!value.isPressed || isDiving) return;
-        if (currentLane < lanes.Length - 1) currentLane++;
+        currentLane = Mathf.Clamp(currentLane + 1, 0, 2);
         UpdateTarget();
     }
 
@@ -71,18 +76,17 @@ public class DuckController : MonoBehaviour
 
     private void UpdateTarget()
     {
-        if (lanes != null && lanes.Length > currentLane && lanes[currentLane] != null)
-        {
-            targetPosition = new Vector3(
-                lanes[currentLane].position.x,
-                transform.position.y,
-                transform.position.z
-            );
-        }
-        else
+        if (lanes == null || currentLane < 0 || currentLane >= lanes.Length || lanes[currentLane] == null)
         {
             Debug.LogWarning("DuckController: unable to update lane—check your lane transforms.");
+            return;
         }
+
+        targetPosition = new Vector3(
+            lanes[currentLane].position.x,
+            transform.position.y,
+            transform.position.z
+        );
     }
 
     private IEnumerator DiveCoroutine()
